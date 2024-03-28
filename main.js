@@ -238,7 +238,7 @@ const calculate = () => {
   const rufbereitschaften = collectOnCallData();
   const istFreierTag = arbeitsFrei
   
-  if(!isTimeBefore(arbeitszeitStart, arbeitszeitEnde)) {
+  if(!isTimeBefore(arbeitszeitStart, arbeitszeitEnde) && !istFreierTag) {
   	document.getElementById("ergebnisse").innerHTML = `<p><span style="background-color: yellow; font-weight: bold;">Bitte überprüfe deine Eingaben!</span></p>
     <p>Ein nicht plausiebles Ergebniss kam zustande (Arbeitsbeginn ist nach dem Arbeitsende)</p>`
     return;
