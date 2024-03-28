@@ -1,6 +1,6 @@
 // Konstanten
 const minUberstunden = 10 // Die maximale Zeit in Stunden befor es Überstunen werden
-const arbeitStartNorm = "06:30"
+const arbeitStartNorm = "06:30" // Geplanter Arbeitsanfang
 
 const timeToFloat = (time) => {
   const [hours, minutes] = time.split(':').map(Number);
@@ -71,7 +71,7 @@ function berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, r
       ausgleichszeit = Math.max(ausgleichszeit, 4);
     }
     
-		// Prüfen ob wir mehr als einen Rufbereitschaftseinsatz haben
+		// Prüfen ob wir mehr als einen Rufbereitschaftseinsatz haben und es der letzte ist
     if(rufbereitschaften.length > 1 && i === rufbereitschaften.length - 1) {
     	if(!isTimeBefore(ende, arbeitStartNorm)) console.log("Du arbeitest schon")
       if(zeitInStunden(ende, arbeitStartNorm) <= 6) letzteBereitschaftEndePlus6h = ende
@@ -89,8 +89,11 @@ function berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, r
   }
 
   if (letzteBereitschaftEndePlus6h) {
-  	fruehesteStartzeit = addTimes(letzteBereitschaftEndePlus6h, "06:00")
-    ausgleichszeit = timeToFloat(subtractTimes(fruehesteStartzeit, arbeitStartNorm))
+  	const ruf6hanpassung = addTimes(letzteBereitschaftEndePlus6h, "06:00")
+    if(isTimeBefore(fruehesteStartzeit, ruf6hanpassung)) {
+    	fruehesteStartzeit = ruf6hanpassung;
+    	ausgleichszeit = timeToFloat(subtractTimes(fruehesteStartzeit, arbeitStartNorm))
+    }
   }
 
   return { gesamtarbeitszeit, ausgleichszeit, fruehesteStartzeit };
