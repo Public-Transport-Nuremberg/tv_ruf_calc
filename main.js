@@ -56,20 +56,21 @@ const zeitInStunden = (start, ende) => {
     return ((endeStunden + endeMinuten / 60) - (startStunden + startMinuten / 60) + 24) % 24;
  };
 
-function berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, rufbereitschaften, istFeiertag = false) {
+function berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, rufbereitschaften, istFreierTag = false) {
   let gesamtarbeitszeitOhneRuf = zeitInStunden(arbeitszeitStart, arbeitszeitEnde) - pausenDauer;
   let gesamteRufbereitschaftszeit = rufbereitschaften.reduce((summe, { start, ende }) => summe + zeitInStunden(start, ende), 0);
   let gesamtarbeitszeit = gesamtarbeitszeitOhneRuf + gesamteRufbereitschaftszeit;
   let ausgleichszeit = gesamtarbeitszeit > minUberstunden ? gesamtarbeitszeit - minUberstunden : 0;
+  let fruehesteStartzeit = arbeitStartNorm;
   
   let letzteBereitschaftEndePlus6h = null;
   for(let i = 0; i < rufbereitschaften.length; i++) {
     const start = rufbereitschaften[i].start
     const ende =  rufbereitschaften[i].ende
     const einsatzDauer = zeitInStunden(start, ende);
-    if (istFeiertag && einsatzDauer >= 4 && ((start <= "00:00" && ende >= "04:00") || (start <= "24:00" && ende >= "04:00"))) {
-      ausgleichszeit = Math.max(ausgleichszeit, 4);
-    }
+    if (istFreierTag && einsatzDauer >= 4 && ende > "00:00") {
+ 			fruehesteStartzeit = addTimes(ende, "04:00");
+		}
     
 		// Prüfen ob wir mehr als einen Rufbereitschaftseinsatz haben und es der letzte ist
     if(rufbereitschaften.length > 1 && i === rufbereitschaften.length - 1) {
@@ -79,7 +80,6 @@ function berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, r
   }
 
   // Früheste Startzeit für den nächsten Tag basierend auf Ausgleichszeit
-  let fruehesteStartzeit = arbeitStartNorm;
   if (ausgleichszeit > 0) {
     const [stunden, minuten] = fruehesteStartzeit.split(':').map(Number);
     const neueStartStunde = stunden + Math.floor(ausgleichszeit);
