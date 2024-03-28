@@ -4,29 +4,29 @@ const maxRuhezeit = "11:00" // Die Ziel Ruhezeit (Keine Ausgleichszeit davor Mö
 const arbeitStartNorm = "06:30" // Geplanter Arbeitsanfang
 let rufCounter = 0;
 
-document.addEventListener('DOMContentLoaded', function() {
-    var checkBox = document.getElementById('arbeitFrei');
-    var elementsToHide = ['arbeitBeginnDiv', 'arbeitEndeDiv', 'arbeitPauseDiv'];
+document.addEventListener('DOMContentLoaded', function () {
+  var checkBox = document.getElementById('arbeitFrei');
+  var elementsToHide = ['arbeitBeginnDiv', 'arbeitEndeDiv', 'arbeitPauseDiv'];
 
-    checkBox.addEventListener('change', function() {
-        elementsToHide.forEach(function(id) {
-            var element = document.getElementById(id);
-            if (checkBox.checked) {
-                element.style.display = 'none';
-            } else {
-                element.style.display = '';
-            }
-        });
+  checkBox.addEventListener('change', function () {
+    elementsToHide.forEach(function (id) {
+      var element = document.getElementById(id);
+      if (checkBox.checked) {
+        element.style.display = 'none';
+      } else {
+        element.style.display = '';
+      }
     });
+  });
 });
 
 const addRufBereitschaft = () => {
-    const container = document.getElementById('rufBereitschaftContainer');
-    const uniqueId = Date.now(); // Generate a unique ID for the wrapper div.
-    const wrapper = document.createElement('div');
-    wrapper.id = `rbElement-${uniqueId}`;
-    wrapper.style.marginTop = "3px";
-    wrapper.innerHTML = `
+  const container = document.getElementById('rufBereitschaftContainer');
+  const uniqueId = Date.now(); // Generate a unique ID for the wrapper div.
+  const wrapper = document.createElement('div');
+  wrapper.id = `rbElement-${uniqueId}`;
+  wrapper.style.marginTop = "3px";
+  wrapper.innerHTML = `
         <span style="margin-right: 10px; color: red; cursor: pointer;">X</span>
         <label>Beginn (HH:MM): <input type="time" name="rbBeginn" required></label>
         <label> Ende (HH:MM): <input type="time" name="rbEnde" required></label>
@@ -35,42 +35,42 @@ const addRufBereitschaft = () => {
         <div class="hover-text">(?)
         <span class="tooltip-text top">Wurde der Aufenthaltsort verlassen für die Erfüllung des Einsatzes?</span>
     `;
-    
-    // Find the newly added span within the wrapper and attach a click event listener
-    const removeBtn = wrapper.querySelector('span');
-    removeBtn.addEventListener('click', function() {
-        wrapper.remove();
-    });
-    
-    container.appendChild(wrapper);
+
+  // Find the newly added span within the wrapper and attach a click event listener
+  const removeBtn = wrapper.querySelector('span');
+  removeBtn.addEventListener('click', function () {
+    wrapper.remove();
+  });
+
+  container.appendChild(wrapper);
 }
 
 const collectOnCallData = () => {
-    const allWrappers = document.querySelectorAll('div[id^="rbElement-"]');
-    const data = Array.from(allWrappers).map(wrapper => {
-        const startInput = wrapper.querySelector('input[name="rbBeginn"]');
-        const endInput = wrapper.querySelector('input[name="rbEnde"]');
-        const verlassenCheckbox = wrapper.querySelector('input[name="ausrück"]');
+  const allWrappers = document.querySelectorAll('div[id^="rbElement-"]');
+  const data = Array.from(allWrappers).map(wrapper => {
+    const startInput = wrapper.querySelector('input[name="rbBeginn"]');
+    const endInput = wrapper.querySelector('input[name="rbEnde"]');
+    const verlassenCheckbox = wrapper.querySelector('input[name="ausrück"]');
 
-        const start = startInput.value;
-        const ende = endInput.value;
-        const verlassen = verlassenCheckbox.checked; // true if checked, false if not
+    const start = startInput.value;
+    const ende = endInput.value;
+    const verlassen = verlassenCheckbox.checked; // true if checked, false if not
 
-        // Validate HH:MM format using a regular expression
-        const timeFormat = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-        const isStartValid = timeFormat.test(start);
-        const isEndValid = timeFormat.test(ende);
+    // Validate HH:MM format using a regular expression
+    const timeFormat = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    const isStartValid = timeFormat.test(start);
+    const isEndValid = timeFormat.test(ende);
 
 
-        // Return data if valid, null otherwise (you might adjust this behavior based on your needs)
-        if (isStartValid && isEndValid) {
-            return { start, ende, verlassen };
-        } else {
-            return null;
-        }
-    }).filter(entry => entry !== null); // Remove invalid entries
+    // Return data if valid, null otherwise (you might adjust this behavior based on your needs)
+    if (isStartValid && isEndValid) {
+      return { start, ende, verlassen };
+    } else {
+      return null;
+    }
+  }).filter(entry => entry !== null); // Remove invalid entries
 
-    return data;
+  return data;
 }
 
 // Zeit Berechnung
@@ -84,7 +84,7 @@ function formatTimeFromFloat(timeFloat) {
   const minutes = Math.round((timeFloat - hours) * 60);
   const paddedHours = hours.toString().padStart(2, '0');
   const paddedMinutes = minutes.toString().padStart(2, '0');
-  
+
   return `${paddedHours}:${paddedMinutes}`;
 }
 
@@ -97,12 +97,12 @@ const floatToTime = (timeFloat) => {
 };
 
 function convertToProperTime(timeString) {
-    const [hours, minutes] = timeString.split(':');
-    const cleanMinutes = minutes.split('.')[0];
-    const paddedHours = hours.padStart(2, '0');
-    const paddedMinutes = cleanMinutes.padStart(2, '0');
+  const [hours, minutes] = timeString.split(':');
+  const cleanMinutes = minutes.split('.')[0];
+  const paddedHours = hours.padStart(2, '0');
+  const paddedMinutes = cleanMinutes.padStart(2, '0');
 
-    return `${paddedHours}:${paddedMinutes}`;
+  return `${paddedHours}:${paddedMinutes}`;
 }
 
 
@@ -120,9 +120,9 @@ const isTimeBefore = (firstTime, secondTime) => {
 }
 
 const isTimeGreaterThan = (time1, time2) => {
-    const [hours1, minutes1] = time1.split(':').map(Number);
-    const [hours2, minutes2] = time2.split(':').map(Number);
-    return hours1 > hours2 || (hours1 === hours2 && minutes1 > minutes2);
+  const [hours1, minutes1] = time1.split(':').map(Number);
+  const [hours2, minutes2] = time2.split(':').map(Number);
+  return hours1 > hours2 || (hours1 === hours2 && minutes1 > minutes2);
 }
 
 const addTimes = (time1, time2) => {
@@ -156,10 +156,10 @@ const subtractTimes = (time1, time2) => {
 }
 
 const zeitInStunden = (start, ende) => {
-    const [startStunden, startMinuten] = start.split(':').map(Number);
-    const [endeStunden, endeMinuten] = ende.split(':').map(Number);
-    return ((endeStunden + endeMinuten / 60) - (startStunden + startMinuten / 60) + 24) % 24;
- };
+  const [startStunden, startMinuten] = start.split(':').map(Number);
+  const [endeStunden, endeMinuten] = ende.split(':').map(Number);
+  return ((endeStunden + endeMinuten / 60) - (startStunden + startMinuten / 60) + 24) % 24;
+};
 
 function berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, rufbereitschaften, istFreierTag = false) {
   let gesamtarbeitszeitOhneRuf = zeitInStunden(arbeitszeitStart, arbeitszeitEnde) - pausenDauer;
@@ -172,30 +172,30 @@ function berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, r
   let letzteBereitschaftEndePlus4h = null;
   let letzteBereitschaftEndePlus6h = null;
   let lastBereitschaftsEnde = null;
-  for(let i = 0; i < rufbereitschaften.length; i++) {
+  for (let i = 0; i < rufbereitschaften.length; i++) {
     const start = rufbereitschaften[i].start
-    const ende =  rufbereitschaften[i].ende
+    const ende = rufbereitschaften[i].ende
     const einsatzDauer = zeitInStunden(start, ende);
     lastBereitschaftsEnde = ende
-    
+
     // Prüfen ob Bereitschaftseinsatz am Feiertag war und über 0 Uhr geht und länger als 4h dauert
     if (istFreierTag && einsatzDauer >= 4 && isTimeBefore(ende, arbeitStartNorm)) {
-    	letzteBereitschaftEndePlus4h = ende;
-		}
+      letzteBereitschaftEndePlus4h = ende;
+    }
   }
-  
+
   // Entfernen aller Rufbereitschaften wo nicht ausgerückt wurde
   const filteredRufbereitschaften = rufbereitschaften.filter(obj => obj.verlassen === true);
-  
-  for(let i = 0; i < filteredRufbereitschaften.length; i++) {
+
+  for (let i = 0; i < filteredRufbereitschaften.length; i++) {
     const start = filteredRufbereitschaften[i].start
-    const ende =  filteredRufbereitschaften[i].ende
+    const ende = filteredRufbereitschaften[i].ende
     const einsatzDauer = zeitInStunden(start, ende);
-    
-		// Prüfen ob wir mehr als einen Rufbereitschaftseinsatz haben und es der letzte ist
-    if(filteredRufbereitschaften.length > 1 && i === filteredRufbereitschaften.length - 1) {
-    	if(!isTimeBefore(ende, arbeitStartNorm)) console.log("Du arbeitest schon");
-      if(zeitInStunden(ende, arbeitStartNorm) <= 6) letzteBereitschaftEndePlus6h = ende;
+
+    // Prüfen ob wir mehr als einen Rufbereitschaftseinsatz haben und es der letzte ist
+    if (filteredRufbereitschaften.length > 1 && i === filteredRufbereitschaften.length - 1) {
+      if (!isTimeBefore(ende, arbeitStartNorm)) console.log("Du arbeitest schon");
+      if (zeitInStunden(ende, arbeitStartNorm) <= 6) letzteBereitschaftEndePlus6h = ende;
     }
   }
 
@@ -207,58 +207,58 @@ function berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, r
     const stundenAddition = Math.floor((minuten + (ausgleichszeit % 1) * 60) / 60);
     fruehesteStartzeit = `${neueStartStunde + stundenAddition}:${neueStartMinute.toString().padStart(2, '0')}`;
   } else {
-  	ausgleichszeit = 0;
+    ausgleichszeit = 0;
   }
 
   if (letzteBereitschaftEndePlus6h) {
-  	const ruf6hanpassung = addTimes(letzteBereitschaftEndePlus6h, "06:00")
-    if(isTimeBefore(fruehesteStartzeit, ruf6hanpassung)) {
-    	fruehesteStartzeit = ruf6hanpassung;
-    	ausgleichszeit = timeToFloat(subtractTimes(fruehesteStartzeit, arbeitStartNorm));
-    }
-  }
-  
-  if (letzteBereitschaftEndePlus4h) {
-  	const ruf4hanpassung = addTimes(letzteBereitschaftEndePlus4h, "04:00")
-    if(isTimeBefore(fruehesteStartzeit, ruf4hanpassung)) {
-    	fruehesteStartzeit = ruf4hanpassung;
+    const ruf6hanpassung = addTimes(letzteBereitschaftEndePlus6h, "06:00")
+    if (isTimeBefore(fruehesteStartzeit, ruf6hanpassung)) {
+      fruehesteStartzeit = ruf6hanpassung;
       ausgleichszeit = timeToFloat(subtractTimes(fruehesteStartzeit, arbeitStartNorm));
     }
   }
-  
-   			
-  
-  if(!gesamtarbeitszeit) {
-  	gesamtarbeitszeit = 0
+
+  if (letzteBereitschaftEndePlus4h) {
+    const ruf4hanpassung = addTimes(letzteBereitschaftEndePlus4h, "04:00")
+    if (isTimeBefore(fruehesteStartzeit, ruf4hanpassung)) {
+      fruehesteStartzeit = ruf4hanpassung;
+      ausgleichszeit = timeToFloat(subtractTimes(fruehesteStartzeit, arbeitStartNorm));
+    }
+  }
+
+
+
+  if (!gesamtarbeitszeit) {
+    gesamtarbeitszeit = 0
   }
 
   return { gesamtarbeitszeit, ausgleichszeit, fruehesteStartzeit };
 }
 
 const calculate = () => {
-	const arbeitsFrei = document.getElementById("arbeitFrei").checked;
+  const arbeitsFrei = document.getElementById("arbeitFrei").checked;
 
-	const arbeitszeitStart = arbeitsFrei === false ? document.getElementById("arbeitBeginn").value : "00:00";
+  const arbeitszeitStart = arbeitsFrei === false ? document.getElementById("arbeitBeginn").value : "00:00";
   const arbeitszeitEnde = arbeitsFrei === false ? document.getElementById("arbeitEnde").value : "00:00";
   const pausenDauer = arbeitsFrei === false ? timeToFloat(document.getElementById("arbeitPause").value) : 0;
   const rufbereitschaften = collectOnCallData();
   const istFreierTag = arbeitsFrei
-  
-  if(!isTimeBefore(arbeitszeitStart, arbeitszeitEnde) && !istFreierTag) {
-  	document.getElementById("ergebnisse").innerHTML = `<p><span style="background-color: yellow; font-weight: bold;">Bitte überprüfe deine Eingaben!</span></p>
+
+  if (!isTimeBefore(arbeitszeitStart, arbeitszeitEnde) && !istFreierTag) {
+    document.getElementById("ergebnisse").innerHTML = `<p><span style="background-color: yellow; font-weight: bold;">Bitte überprüfe deine Eingaben!</span></p>
     <p>Ein nicht plausiebles Ergebniss kam zustande (Arbeitsbeginn ist nach dem Arbeitsende)</p>`
     return;
   }
-  
+
   //console.log(arbeitszeitStart, arbeitszeitEnde, pausenDauer, rufbereitschaften, istFreierTag)
-  
-	const { ausgleichszeit, gesamtarbeitszeit, fruehesteStartzeit } = berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, rufbereitschaften, istFreierTag);
-  if(gesamtarbeitszeit > 24) {
-  	document.getElementById("ergebnisse").innerHTML = `<p><span style="background-color: yellow; font-weight: bold;">Bitte überprüfe deine Eingaben!</span></p>
+
+  const { ausgleichszeit, gesamtarbeitszeit, fruehesteStartzeit } = berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, rufbereitschaften, istFreierTag);
+  if (gesamtarbeitszeit > 24) {
+    document.getElementById("ergebnisse").innerHTML = `<p><span style="background-color: yellow; font-weight: bold;">Bitte überprüfe deine Eingaben!</span></p>
     <p>Ein nicht plausiebles Ergebniss kam zustande (Arbeitszeit >24h)</p>`
     return;
   }
-	document.getElementById("ergebnisse").innerHTML = `
+  document.getElementById("ergebnisse").innerHTML = `
   <p>Ausgleichszeit: <strong>${formatTimeFromFloat(ausgleichszeit)}</strong></p>
   <p>Gesamte Arbeitszeit: <strong>${formatTimeFromFloat(gesamtarbeitszeit)}</strong></p>
   <p>Arbeitsbeginn ab: <span style="background-color: yellow; font-weight: bold;">${convertToProperTime(fruehesteStartzeit)}</span>
