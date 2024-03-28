@@ -38,3 +38,14 @@
   display: inline-block;
   text-align: center;
 }
+
+@media (max-width: 600px) {
+  .tooltip-text {
+    width: auto; /* Allows the tooltip to fit content up to the max-width */
+  }
+  /* Adjust form elements for better usability on small screens */
+  input[type="time"], button {
+    width: 100%;
+    margin: 5px 0; /* Adds some space around elements */
+  }
+}
