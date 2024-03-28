@@ -78,6 +78,15 @@ const timeToFloat = (time) => {
   return hours + minutes / 60;
 }
 
+function formatTimeFromFloat(timeFloat) {
+  const hours = Math.floor(timeFloat);
+  const minutes = Math.round((timeFloat - hours) * 60);
+  const paddedHours = hours.toString().padStart(2, '0');
+  const paddedMinutes = minutes.toString().padStart(2, '0');
+  
+  return `${paddedHours}:${paddedMinutes}`;
+}
+
 const floatToTime = (timeFloat) => {
   const hours = Math.floor(timeFloat);
   const minutes = Math.round((timeFloat - hours) * 60);
@@ -86,14 +95,13 @@ const floatToTime = (timeFloat) => {
   return `${paddedHours}:${paddedMinutes}`;
 };
 
-// Fix Floating Point Implementation
-function formatTimeFromFloat(timeFloat) {
-  const hours = Math.floor(timeFloat);
-  const minutes = Math.round((timeFloat - hours) * 60);
-  const paddedHours = hours.toString().padStart(2, '0');
-  const paddedMinutes = minutes.toString().padStart(2, '0');
-  
-  return `${paddedHours}:${paddedMinutes}`;
+function convertToProperTime(timeString) {
+    const [hours, minutes] = timeString.split(':');
+    const cleanMinutes = minutes.split('.')[0];
+    const paddedHours = hours.padStart(2, '0');
+    const paddedMinutes = cleanMinutes.padStart(2, '0');
+
+    return `${paddedHours}:${paddedMinutes}`;
 }
 
 
@@ -230,9 +238,9 @@ const calculate = () => {
     return;
   }
 	document.getElementById("ergebnisse").innerHTML = `
-  <p>Ausgleichszeit: <strong>${floatToTime(ausgleichszeit)}</strong></p>
-  <p>Gesamte Arbeitszeit: <strong>${floatToTime(gesamtarbeitszeit)}</strong></p>
-  <p>Arbeitsbeginn ab: <span style="background-color: yellow; font-weight: bold;">${formatTimeFromFloat(fruehesteStartzeit)}</span>
+  <p>Ausgleichszeit: <strong>${formatTimeFromFloat(ausgleichszeit)}</strong></p>
+  <p>Gesamte Arbeitszeit: <strong>${formatTimeFromFloat(gesamtarbeitszeit)}</strong></p>
+  <p>Arbeitsbeginn ab: <span style="background-color: yellow; font-weight: bold;">${convertToProperTime(fruehesteStartzeit)}</span>
     <span class="hover-text">(?)<span class="tooltip-text top">Diese Zeit wird in derselben Zeitzone berechnet, in der der Rufbereitschaftsblock begonnen hat (das 24-Stunden-Intervall). Daher werden keine Zeitzonen unterstützt, auch keine Sommer-/Winterzeitumstellung, die in genau dieser Nacht passiert.</span></span>
   </p>
 `;
