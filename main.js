@@ -178,9 +178,18 @@ function berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, r
     if (istFreierTag && einsatzDauer >= 4 && isTimeBefore(ende, arbeitStartNorm)) {
     	letzteBereitschaftEndePlus4h = ende;
 		}
+  }
+  
+  // Entfernen aller Rufbereitschaften wo nicht ausgerückt wurde
+  const filteredRufbereitschaften = rufbereitschaften.filter(obj => obj.verlassen === true);
+  
+  for(let i = 0; i < filteredRufbereitschaften.length; i++) {
+    const start = filteredRufbereitschaften[i].start
+    const ende =  filteredRufbereitschaften[i].ende
+    const einsatzDauer = zeitInStunden(start, ende);
     
 		// Prüfen ob wir mehr als einen Rufbereitschaftseinsatz haben und es der letzte ist
-    if(rufbereitschaften.length > 1 && i === rufbereitschaften.length - 1) {
+    if(filteredRufbereitschaften.length > 1 && i === filteredRufbereitschaften.length - 1) {
     	if(!isTimeBefore(ende, arbeitStartNorm)) console.log("Du arbeitest schon");
       if(zeitInStunden(ende, arbeitStartNorm) <= 6) letzteBereitschaftEndePlus6h = ende;
     }
@@ -228,6 +237,12 @@ const calculate = () => {
   const pausenDauer = arbeitsFrei === false ? timeToFloat(document.getElementById("arbeitPause").value) : 0;
   const rufbereitschaften = collectOnCallData();
   const istFreierTag = arbeitsFrei
+  
+  if(!isTimeBefore(arbeitszeitStart, arbeitszeitEnde)) {
+  	document.getElementById("ergebnisse").innerHTML = `<p><span style="background-color: yellow; font-weight: bold;">Bitte überprüfe deine Eingaben!</span></p>
+    <p>Ein nicht plausiebles Ergebniss kam zustande (Arbeitsbeginn ist nach dem Arbeitsende)</p>`
+    return;
+  }
   
   //console.log(arbeitszeitStart, arbeitszeitEnde, pausenDauer, rufbereitschaften, istFreierTag)
   
