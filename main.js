@@ -1,5 +1,6 @@
 // Konstanten
 const minUberstunden = 10 // Die maximale Zeit in Stunden befor es Überstunen werden
+const maxRuhezeit = "11:00" // Die Ziel Ruhezeit (Keine Ausgleichszeit davor Möglich, im fall von 06:30 dann 19:30)
 const arbeitStartNorm = "06:30" // Geplanter Arbeitsanfang
 let rufCounter = 0;
 
@@ -30,7 +31,7 @@ const addRufBereitschaft = () => {
         <label>Beginn (HH:MM): <input type="time" name="rbBeginn" required></label>
         <label> Ende (HH:MM): <input type="time" name="rbEnde" required></label>
         <label for="ausrück">Aufenthalsort Verlassen</label>
-        <input type="checkbox" id="ausrück" name="ausrück" />
+        <input type="checkbox" id="ausrück" name="ausrück" checked/>
         <div class="hover-text">(?)
         <span class="tooltip-text top">Wurde der Aufenthaltsort verlassen für die Erfüllung des Einsatzes?</span>
     `;
@@ -164,15 +165,18 @@ function berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, r
   let gesamtarbeitszeitOhneRuf = zeitInStunden(arbeitszeitStart, arbeitszeitEnde) - pausenDauer;
   let gesamteRufbereitschaftszeit = rufbereitschaften.reduce((summe, { start, ende }) => summe + zeitInStunden(start, ende), 0);
   let gesamtarbeitszeit = gesamtarbeitszeitOhneRuf + gesamteRufbereitschaftszeit;
+  let frühsteKondition = subtractTimes(arbeitStartNorm, maxRuhezeit)
   let ausgleichszeit = gesamtarbeitszeit > minUberstunden ? gesamtarbeitszeit - minUberstunden : 0;
   let fruehesteStartzeit = arbeitStartNorm;
-  
+
   let letzteBereitschaftEndePlus4h = null;
   let letzteBereitschaftEndePlus6h = null;
+  let lastBereitschaftsEnde = null;
   for(let i = 0; i < rufbereitschaften.length; i++) {
     const start = rufbereitschaften[i].start
     const ende =  rufbereitschaften[i].ende
     const einsatzDauer = zeitInStunden(start, ende);
+    lastBereitschaftsEnde = ende
     
     // Prüfen ob Bereitschaftseinsatz am Feiertag war und über 0 Uhr geht und länger als 4h dauert
     if (istFreierTag && einsatzDauer >= 4 && isTimeBefore(ende, arbeitStartNorm)) {
@@ -196,12 +200,14 @@ function berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, r
   }
 
   // Früheste Startzeit für den nächsten Tag basierend auf Ausgleichszeit
-  if (ausgleichszeit > 0) {
+  if (ausgleichszeit > 0 && !isTimeBefore(lastBereitschaftsEnde, frühsteKondition)) {
     const [stunden, minuten] = fruehesteStartzeit.split(':').map(Number);
     const neueStartStunde = stunden + Math.floor(ausgleichszeit);
     const neueStartMinute = (minuten + (ausgleichszeit % 1) * 60) % 60;
     const stundenAddition = Math.floor((minuten + (ausgleichszeit % 1) * 60) / 60);
     fruehesteStartzeit = `${neueStartStunde + stundenAddition}:${neueStartMinute.toString().padStart(2, '0')}`;
+  } else {
+  	ausgleichszeit = 0;
   }
 
   if (letzteBereitschaftEndePlus6h) {
@@ -261,3 +267,4 @@ const calculate = () => {
 `;
 
 }
+
