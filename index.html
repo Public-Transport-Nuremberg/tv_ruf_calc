@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Ruhezeit und Zeitausgleich Berechner</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+  <h2>Ruhezeit und Zeitausgleichs Tool</h2>
+  <form id="arbeitZeitenForm">
+    <div>
+      <label for="arbeitFrei">Arbeitsfreier Tag</label>
+      <input type="checkbox" id="arbeitFrei" name="arbeitFrei" />
+      <div class="hover-text">(?)
+        <span class="tooltip-text top">War der Start Tag ein Tag ohne SOLL Arbeitszeit? Erklärung: Ein Rufbereitschafts Interval startet z.b. um 07:00 und geht minimal 8 Stunden und maximal 24 Stunden.</span>
+      </div>
+    </div>
+    <div id="arbeitBeginnDiv" style="margin-top: 3px;">
+      <label for="arbeitBeginn">Arbeitsbeginn (HH:MM):</label>
+      <input type="time" id="arbeitBeginn" value="06:30" required>
+    </div>
+    <div id="arbeitEndeDiv" style="margin-top: 3px;">
+      <label for="arbeitEnde">Arbeitsende (HH:MM):</label>
+      <input type="time" id="arbeitEnde" value="15:30" required>
+    </div>
+    <div id="arbeitPauseDiv" style="margin-top: 3px;">
+      <label for="arbeitEnde">Pause (HH:MM):</label>
+      <input type="time" id="arbeitPause" value="00:30" required>
+    </div>
+    <div id="rufBereitschaftContainer">
+    <h3>Rufbereitschaften</h3>
+ <!-- Rufbereitschaften werden dynamisch hinzugefügt -->
+    </div>
+    <div style="margin-top: 8px;">
+      <button type="button" onclick="addRufBereitschaft()">Rufbereitschaft hinzufügen</button>
+      <button type="button" onclick="calculate()">Berechnen</button>
+    </div>
+   </form>
+  <div id="ergebnisse">
+  </div>
+  <script src="main.js"></script>
+</body>
+</html>
