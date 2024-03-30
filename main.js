@@ -96,11 +96,37 @@ const floatToTime = (timeFloat) => {
   return `${paddedHours}:${paddedMinutes}`;
 };
 
+function isTimeWithinRange(time, start, end) {
+  const timeToMinutes = time => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  const timeMinutes = timeToMinutes(time);
+  const startMinutes = timeToMinutes(start);
+  const endMinutes = timeToMinutes(end);
+
+  if (startMinutes <= endMinutes) {
+    return timeMinutes >= startMinutes && timeMinutes <= endMinutes;
+  } else {
+    return timeMinutes >= startMinutes || timeMinutes <= endMinutes;
+  }
+}
+
 function convertToProperTime(timeString) {
-  const [hours, minutes] = timeString.split(':');
-  const cleanMinutes = minutes.split('.')[0];
-  const paddedHours = hours.padStart(2, '0');
-  const paddedMinutes = cleanMinutes.padStart(2, '0');
+  let [hours, minutes] = timeString.split(':');
+  let [cleanMinutes, fractional] = minutes.split('.');
+
+  if (fractional && parseFloat(`0.${fractional}`) >= 0.5) {
+    cleanMinutes = parseInt(cleanMinutes) + 1;
+    if (cleanMinutes >= 60) {
+      cleanMinutes = 0;
+      hours = parseInt(hours) + 1;
+    }
+  }
+
+  const paddedHours = hours.toString().padStart(2, '0');
+  const paddedMinutes = cleanMinutes.toString().padStart(2, '0');
 
   return `${paddedHours}:${paddedMinutes}`;
 }
@@ -188,9 +214,7 @@ function berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, r
   const filteredRufbereitschaften = rufbereitschaften.filter(obj => obj.verlassen === true);
 
   for (let i = 0; i < filteredRufbereitschaften.length; i++) {
-    const start = filteredRufbereitschaften[i].start
     const ende = filteredRufbereitschaften[i].ende
-    const einsatzDauer = zeitInStunden(start, ende);
 
     // Prüfen ob wir mehr als einen Rufbereitschaftseinsatz haben und es der letzte ist
     if (filteredRufbereitschaften.length > 1 && i === filteredRufbereitschaften.length - 1) {
@@ -200,7 +224,7 @@ function berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, r
   }
 
   // Früheste Startzeit für den nächsten Tag basierend auf Ausgleichszeit
-  if (ausgleichszeit > 0 && !isTimeBefore(lastBereitschaftsEnde, frühsteKondition)) {
+  if (ausgleichszeit > 0 && isTimeWithinRange(lastBereitschaftsEnde, frühsteKondition, arbeitStartNorm)) {
     const [stunden, minuten] = fruehesteStartzeit.split(':').map(Number);
     const neueStartStunde = stunden + Math.floor(ausgleichszeit);
     const neueStartMinute = (minuten + (ausgleichszeit % 1) * 60) % 60;
@@ -245,7 +269,8 @@ const calculate = () => {
   const istFreierTag = arbeitsFrei
 
   if (!isTimeBefore(arbeitszeitStart, arbeitszeitEnde) && !istFreierTag) {
-    document.getElementById("ergebnisse").innerHTML = `<p><span style="background-color: yellow; font-weight: bold;">Bitte überprüfe deine Eingaben!</span></p>
+    document.getElementById("ergebnisse").innerHTML = `<p><span style="background-color: #8fbc8f; color: #000; font-weight: bold;"
+>Bitte überprüfe deine Eingaben!</span></p>
     <p>Ein nicht plausiebles Ergebniss kam zustande (Arbeitsbeginn ist nach dem Arbeitsende)</p>`
     return;
   }
@@ -254,14 +279,16 @@ const calculate = () => {
 
   const { ausgleichszeit, gesamtarbeitszeit, fruehesteStartzeit } = berechneArbeitszeiten(arbeitszeitStart, arbeitszeitEnde, pausenDauer, rufbereitschaften, istFreierTag);
   if (gesamtarbeitszeit > 24) {
-    document.getElementById("ergebnisse").innerHTML = `<p><span style="background-color: yellow; font-weight: bold;">Bitte überprüfe deine Eingaben!</span></p>
+    document.getElementById("ergebnisse").innerHTML = `<p><span style="background-color: #8fbc8f; color: #000; font-weight: bold;"
+>Bitte überprüfe deine Eingaben!</span></p>
     <p>Ein nicht plausiebles Ergebniss kam zustande (Arbeitszeit >24h)</p>`
     return;
   }
   document.getElementById("ergebnisse").innerHTML = `
   <p>Ausgleichszeit: <strong>${formatTimeFromFloat(ausgleichszeit)}</strong></p>
   <p>Gesamte Arbeitszeit: <strong>${formatTimeFromFloat(gesamtarbeitszeit)}</strong></p>
-  <p>Arbeitsbeginn ab: <span style="background-color: yellow; font-weight: bold;">${convertToProperTime(fruehesteStartzeit)}</span>
+  <p>Arbeitsbeginn ab: <span style="background-color: #8fbc8f; color: #000; font-weight: bold;"
+>${convertToProperTime(fruehesteStartzeit)}</span>
     <span class="hover-text">(?)<span class="tooltip-text top">Diese Zeit wird in derselben Zeitzone berechnet, in der der Rufbereitschaftsblock begonnen hat (das 24-Stunden-Intervall). Daher werden keine Zeitzonen unterstützt, auch keine Sommer-/Winterzeitumstellung, die in genau dieser Nacht passiert.</span></span>
   </p>
 `;
