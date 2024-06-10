@@ -10,6 +10,14 @@
   <h2>Ruhezeit und Zeitausgleichs Tool</h2>
   <form id="arbeitZeitenForm">
     <div>
+      <div id="arbeitBeginnDiv" style="margin-top: 3px;">
+        <label for="arbeitBeginn">Standartbeginn (HH:MM):</label>
+        <input type="time" id="regularBeginn" value="00:00" required>
+        <div class="hover-text">(?)
+          <span class="tooltip-text top">Der reguläre Arbeitsbeginn in Abhängigkeit mit den gearbeiteten Wochenstunden oder anderen Vereinbarungen.</span>
+        </div>
+      </div>
+      <hr>
       <label for="arbeitFrei">Arbeitsfreier Tag</label>
       <input type="checkbox" id="arbeitFrei" name="arbeitFrei" />
       <div class="hover-text">(?)
