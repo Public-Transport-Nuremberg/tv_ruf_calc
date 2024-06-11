@@ -20,6 +20,7 @@ regularBeginnInput.addEventListener('change', function () {
   const isStartValid = timeFormat.test(regularBeginnInput.value);
   if(isStartValid) {
     localStorage.setItem('norm_az', regularBeginnInput.value);
+    arbeitStartNorm = regularBeginnInput.value;
   } else {
     alert("Fehlerhafter Input (HH:MM) wird erwartet!")
   }
@@ -315,4 +316,3 @@ const calculate = () => {
 `;
 
 }
-
