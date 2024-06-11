@@ -1,8 +1,30 @@
 // Konstanten
 const minUberstunden = 10 // Die maximale Zeit in Stunden befor es Überstunen werden
 const maxRuhezeit = "11:00" // Die Ziel Ruhezeit (Keine Ausgleichszeit davor Möglich, im fall von 06:30 dann 19:30)
-const arbeitStartNorm = "06:30" // Geplanter Arbeitsanfang
+let arbeitStartNorm = "06:30" // Geplanter Arbeitsanfang
 let rufCounter = 0;
+
+// Setup Regulären Arbeitstart
+const regularBeginnInput = document.getElementById('regularBeginn');
+const lsNormAZ = localStorage.getItem('norm_az');
+
+if (lsNormAZ) {
+  regularBeginnInput.value = lsNormAZ;
+  arbeitStartNorm = lsNormAZ;
+} else {
+  regularBeginnInput.value = arbeitStartNorm;
+}
+
+regularBeginnInput.addEventListener('change', function () {
+  const timeFormat = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+  const isStartValid = timeFormat.test(regularBeginnInput.value);
+  if(isStartValid) {
+    localStorage.setItem('norm_az', regularBeginnInput.value);
+    arbeitStartNorm = regularBeginnInput.value;
+  } else {
+    alert("Fehlerhafter Input (HH:MM) wird erwartet!")
+  }
+});
 
 document.addEventListener('DOMContentLoaded', function () {
   var checkBox = document.getElementById('arbeitFrei');
@@ -54,21 +76,21 @@ const collectOnCallData = () => {
 
     const start = startInput.value;
     const ende = endInput.value;
-    const verlassen = verlassenCheckbox.checked; // true if checked, false if not
+    const verlassen = verlassenCheckbox.checked; // true wenn ausgewählt, false wenn nicht
 
-    // Validate HH:MM format using a regular expression
+    // Überprüfe HH:MM das Format mit einer RegEx
     const timeFormat = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
     const isStartValid = timeFormat.test(start);
     const isEndValid = timeFormat.test(ende);
 
 
-    // Return data if valid, null otherwise (you might adjust this behavior based on your needs)
+    // Gebe nur Geprüfte Daten aus ( Diese Funktion definiert was richtig ist oder nicht)
     if (isStartValid && isEndValid) {
       return { start, ende, verlassen };
     } else {
       return null;
     }
-  }).filter(entry => entry !== null); // Remove invalid entries
+  }).filter(entry => entry !== null); // Entferne fehlerhafte Einträge
 
   return data;
 }
@@ -294,4 +316,3 @@ const calculate = () => {
 `;
 
 }
-
