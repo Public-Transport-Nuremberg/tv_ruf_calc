@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Inflationsverlust durch verspätete Lohnnachzahlung</title>
+
+  <style>
+    body {
+      max-width: 1050px;
+      margin: 40px auto;
+      padding: 0 20px;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      color: #222;
+    }
+
+    .container {
+      padding: 25px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 24px;
+    }
+
+    .info {
+      margin-bottom: 20px;
+      padding: 15px;
+      line-height: 1.5;
+      background: #eef5ff;
+      border-left: 4px solid #3874c8;
+    }
+
+    table {
+      width: 100%;
+      margin-bottom: 20px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: right;
+    }
+
+    th {
+      background: #eee;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    input[type="number"] {
+      width: 100px;
+      padding: 6px;
+      box-sizing: border-box;
+      text-align: right;
+    }
+
+    button {
+      padding: 10px 18px;
+      border: 0;
+      border-radius: 5px;
+      background: #2467be;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #194e91;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 18px;
+      background: #e8f7e8;
+      border: 1px solid #81bd81;
+      border-radius: 6px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .formula {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f8f8;
+      border-radius: 6px;
+      line-height: 1.6;
+    }
+
+    .formula code {
+      font-size: 14px;
+    }
+
+    .group-row {
+      background: #fff8db;
+      font-weight: bold;
+    }
+
+    @media (max-width: 750px) {
+      table {
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        padding: 6px;
+      }
+
+      input[type="number"] {
+        width: 75px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Inflationsverlust der verspäteten Lohnnachzahlung</h1>
+
+    <div class="info">
+      Die Lohnerhöhung gilt rückwirkend ab Januar 2026. Die Tarifeinigung
+      erfolgte am 16. April 2026.
+      <br><br>
+      Die Nachzahlungen für Januar bis April hätten daher zusammen Ende April
+      ausgezahlt werden können. Dieser Gesamtbetrag verliert ab Mai an
+      Kaufkraft.
+      <br><br>
+      Bei einer tatsächlichen Auszahlung Ende Juli gilt:
+      Januar bis April verlieren durch die Inflation in Mai, Juni und Juli an
+      Wert. Die Mai-Nachzahlung verliert durch Juni und Juli an Wert, die
+      Juni-Nachzahlung durch Juli.
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Anspruch</th>
+          <th>Nachzahlung</th>
+          <th>Inflationsmonate</th>
+          <th>Kumulierte Inflation</th>
+          <th>Kaufkraftverlust</th>
+        </tr>
+      </thead>
+
+      <tbody id="resultRows"></tbody>
+    </table>
+
+    <button type="button" id="calculateButton">
+      Verlust berechnen
+    </button>
+
+    <div class="result">
+      Gesamter Kaufkraftverlust:
+      <span id="totalLoss">0,00 €</span>
+    </div>
+
+    <div class="formula">
+      <strong>Berechnung:</strong>
+      <br><br>
+
+      Inflationsfaktor:
+      <br>
+      <code>
+        (1 + Inflation Monat 1) × (1 + Inflation Monat 2) × …
+      </code>
+
+      <br><br>
+
+      Kaufkraftverlust:
+      <br>
+      <code>
+        Nachzahlung − (Nachzahlung ÷ Inflationsfaktor)
+      </code>
+    </div>
+  </div>
+
+  <script>
+    /*
+     * Hier können Inflation und Nachzahlung direkt fest eingetragen werden.
+     *
+     * inflation:
+     * Monatliche Inflation in Prozent.
+     *
+     * payment:
+     * Nachzahlung für diesen Monat in Euro.
+     *
+     * Die Werte werden anschließend trotzdem als Eingabefelder angezeigt
+     * und können im Browser geändert werden.
+     */
+const months = [
+  { name: "Januar 2026",  inflation: 0,        payment: 100 },
+  { name: "Februar 2026", inflation: 0,        payment: 100 },
+  { name: "März 2026",    inflation: 0,        payment: 100 },
+  { name: "April 2026",   inflation: 0,        payment: 100 },
+  { name: "Mai 2026",     inflation: 0.214127, payment: 100 },
+  { name: "Juni 2026",    inflation: 0.189675, payment: 100 },
+  { name: "Juli 2026",    inflation: 0.230391, payment: 100 }
+];
+
+    /*
+     * Tatsächlicher Auszahlungsmonat.
+     *
+     * 6 = Juli, weil Arrays bei 0 beginnen:
+     *
+     * 0 Januar
+     * 1 Februar
+     * 2 März
+     * 3 April
+     * 4 Mai
+     * 5 Juni
+     * 6 Juli
+     */
+    const paymentMonthIndex = 6;
+	const lastClaimMonthIndex = 5; // Juni
+
+    const resultRows = document.getElementById("resultRows");
+
+    function formatCurrency(value) {
+      return new Intl.NumberFormat("de-DE", {
+        style: "currency",
+        currency: "EUR"
+      }).format(value);
+    }
+
+    function formatPercent(value) {
+      return new Intl.NumberFormat("de-DE", {
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3
+      }).format(value) + " %";
+    }
+
+    function getNumber(input) {
+      const value = Number.parseFloat(input.value);
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    function createInputCell(value, className, suffix) {
+      return `
+        <input
+          type="number"
+          class="${className}"
+          value="${value}"
+          step="0.01"
+        >
+        ${suffix}
+      `;
+    }
+
+    function createTable() {
+      resultRows.innerHTML = "";
+
+      /*
+       * Januar bis April werden zu einem Anspruch zusammengefasst.
+       * Der gesamte Betrag war nach der Einigung Ende April fällig.
+       */
+      const janToAprilPayment = months
+        .slice(0, 4)
+        .reduce((sum, month) => sum + month.payment, 0);
+
+      const groupedRow = document.createElement("tr");
+      groupedRow.classList.add("group-row");
+
+      groupedRow.innerHTML = `
+        <td>Januar bis April 2026</td>
+
+        <td>
+          ${createInputCell(
+            janToAprilPayment,
+            "grouped-payment",
+            "€"
+          )}
+        </td>
+
+        <td class="inflation-months"></td>
+        <td class="cumulative-inflation"></td>
+        <td class="loss"></td>
+      `;
+
+      resultRows.appendChild(groupedRow);
+
+      /*
+       * Ab Mai erhält jeder Anspruch eine eigene Zeile.
+       */
+      for (let index = 4; index <= lastClaimMonthIndex; index++) {
+  const month = months[index];
+  const row = document.createElement("tr");
+
+  row.dataset.monthIndex = index;
+
+  row.innerHTML = `
+    <td>${month.name}</td>
+
+    <td>
+      ${createInputCell(
+        month.payment,
+        "monthly-payment",
+        "€"
+      )}
+    </td>
+
+    <td class="inflation-months"></td>
+    <td class="cumulative-inflation"></td>
+    <td class="loss"></td>
+  `;
+
+  resultRows.appendChild(row);
+}
+
+      /*
+       * Inflationseingaben werden separat unterhalb der Berechnung ergänzt.
+       */
+      const inflationHeader = document.createElement("tr");
+
+      inflationHeader.innerHTML = `
+        <th colspan="5" style="text-align:left">
+          Monatliche Inflationswerte
+        </th>
+      `;
+
+      resultRows.appendChild(inflationHeader);
+
+      months.forEach((month, index) => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+          <td>${month.name}</td>
+
+          <td colspan="2">
+            Inflation
+          </td>
+
+          <td colspan="2">
+            ${createInputCell(
+              month.inflation,
+              "inflation-input",
+              "%"
+            )}
+          </td>
+        `;
+
+        row.querySelector(".inflation-input").dataset.monthIndex = index;
+
+        resultRows.appendChild(row);
+      });
+
+      document
+        .querySelectorAll("input")
+        .forEach(input => input.addEventListener("input", calculate));
+
+      calculate();
+    }
+
+    function getInflationRates() {
+      const rates = [...document.querySelectorAll(".inflation-input")];
+
+      return rates.map(input => getNumber(input) / 100);
+    }
+
+    function calculateInflationFactor(
+      inflationRates,
+      firstInflationMonth,
+      lastInflationMonth
+    ) {
+      let factor = 1;
+
+      for (
+        let index = firstInflationMonth;
+        index <= lastInflationMonth;
+        index++
+      ) {
+        factor *= 1 + inflationRates[index];
+      }
+
+      return factor;
+    }
+
+    function calculateLoss(payment, inflationFactor) {
+      if (payment <= 0 || inflationFactor <= 0) {
+        return 0;
+      }
+
+      const purchasingPower = payment / inflationFactor;
+
+      return payment - purchasingPower;
+    }
+
+    function getMonthNames(firstIndex, lastIndex) {
+      if (firstIndex > lastIndex) {
+        return "Keine";
+      }
+
+      return months
+        .slice(firstIndex, lastIndex + 1)
+        .map(month => month.name.replace(" 2026", ""))
+        .join(", ");
+    }
+
+    function calculate() {
+      const inflationRates = getInflationRates();
+
+      let totalLoss = 0;
+
+      /*
+       * Januar bis April:
+       *
+       * Die gesamte Nachzahlung war Ende April fällig.
+       * Der Kaufkraftverlust beginnt deshalb im Mai.
+       */
+      const groupedRow = document.querySelector(".group-row");
+      const groupedPayment = getNumber(
+        groupedRow.querySelector(".grouped-payment")
+      );
+
+      const groupedFirstInflationMonth = 4;
+      const groupedLastInflationMonth = paymentMonthIndex;
+
+      const groupedInflationFactor = calculateInflationFactor(
+        inflationRates,
+        groupedFirstInflationMonth,
+        groupedLastInflationMonth
+      );
+
+      const groupedLoss = calculateLoss(
+        groupedPayment,
+        groupedInflationFactor
+      );
+
+      totalLoss += groupedLoss;
+
+      groupedRow.querySelector(".inflation-months").textContent =
+        getMonthNames(
+          groupedFirstInflationMonth,
+          groupedLastInflationMonth
+        );
+
+      groupedRow.querySelector(".cumulative-inflation").textContent =
+        formatPercent((groupedInflationFactor - 1) * 100);
+
+      groupedRow.querySelector(".loss").textContent =
+        formatCurrency(groupedLoss);
+
+      /*
+       * Für jeden späteren Monatsanspruch beginnt der Verlust erst im
+       * darauffolgenden Monat.
+       *
+       * Mai    -> Juni und Juli
+       * Juni   -> Juli
+       * Juli   -> keine Inflation, wenn Ende Juli ausgezahlt
+       */
+      document
+        .querySelectorAll("tr[data-month-index]")
+        .forEach(row => {
+          const monthIndex = Number(row.dataset.monthIndex);
+          const payment = getNumber(
+            row.querySelector(".monthly-payment")
+          );
+
+          const firstInflationMonth = monthIndex + 1;
+          const lastInflationMonth = paymentMonthIndex;
+
+          const inflationFactor = calculateInflationFactor(
+            inflationRates,
+            firstInflationMonth,
+            lastInflationMonth
+          );
+
+          const loss = calculateLoss(payment, inflationFactor);
+
+          totalLoss += loss;
+
+          row.querySelector(".inflation-months").textContent =
+            getMonthNames(
+              firstInflationMonth,
+              lastInflationMonth
+            );
+
+          row.querySelector(".cumulative-inflation").textContent =
+            formatPercent((inflationFactor - 1) * 100);
+
+          row.querySelector(".loss").textContent =
+            formatCurrency(loss);
+        });
+
+      document.getElementById("totalLoss").textContent =
+        formatCurrency(totalLoss);
+    }
+
+    document
+      .getElementById("calculateButton")
+      .addEventListener("click", calculate);
+
+    createTable();
+  </script>
+</body>
+</html>
